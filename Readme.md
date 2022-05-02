@@ -200,18 +200,62 @@ Notice that only <i>sel</i> is present in the sensitivity list. Therefore, the <
 ![mis2](https://user-images.githubusercontent.com/88287721/166328123-5b05aebf-e1dc-40a4-867a-8e082cb4e831.png)
 
 #### Blocking v/s Non-blocking Statements
+Blocking statements in Verilog are indicated by the "=" assignment symbol. Blocking statements in an <b>always</b> block are executed in the order in which they appear (similiar to high level languages), and the execution of one statement happens only after the execution of the previous blocking statement is completed. Hence, the order in which blocking statements are written becomes very important. On the other hand, non-blocking statements are executed in parallel and hence the order in which they are written inside an <b>always</b> block does not matter. Once the <b>always</b> block is entered, the RHS of all the non-blocking statements are evaluated at once and assigned to the LHS variable at the indicated time instants.
+
+Consider the following two cases where the order of the blocking statements are different:
+
+![blo1](https://user-images.githubusercontent.com/88287721/166329388-8ef1867b-f5c4-406f-9f1b-3cd6650f9bc5.png)
+
+The code on the left infers a flop since the previous value of q0 is to be used. Whereas the synthesis tool for both cases would generate combinational block only and not infer flops as shown below:
+
+![blo2](https://user-images.githubusercontent.com/88287721/166329666-c77642f7-65bc-4ede-93cc-46c17906a676.png)
 
 ## Day 5: Optimization in Synthesis
 ### If construct
+The <b>if</b> construct typically occurs in <b>always</b> block and gives a strict priority in the execution of the Verilog code, which may be represented as a nested set of multiplexers as shown below:
+
+![if1](https://user-images.githubusercontent.com/88287721/166330019-edc0108f-e54b-4b89-ab28-73c026d22b8b.png)
+
 #### Incomplete If construct
+When the <b>else</b> portion of the <b>if</b> condition is not specified, it is called an incomplete if and leads to an inferred latch. This latch is undesirable most of the times in combinational circuits and can cause problems in timing closure. An example with illustration is shown below:
+
+![nif1](https://user-images.githubusercontent.com/88287721/166330712-138623ca-c75a-43b6-892a-ab6a5563c529.png)
+
+The following is the example of an RTL code where the definition of if is incomplete. The output is not specified when i0 takes the value 0. Hence, a latch is inferred as shown by the output of synthesis below:
+
+![nif2](https://user-images.githubusercontent.com/88287721/166331215-0dcac9e7-fd54-4633-ba86-5be36ca9d5cc.png)
+![nif3](https://user-images.githubusercontent.com/88287721/166331230-efca7624-4923-43ab-9f7b-fe37fddd8e9b.png)
+
 ### Case construct
+<b>Case</b> construct also infers a multiplexer like the <b>if</b> statement, but the priorty present in <b>if</b> statement is absent here. Hence, if the variable inside the <b>case</b> matches with one of the options, the other options are also checked for a match. Hence, the designer must make sure to code the options in a non-overlapping manner.
+
 #### Incomplete Case construct
+Consider the following RTL where all the cases for the switching variable is not covered. Hence, latch will be inferred as in the incomplete if condition. 
+
+![case1](https://user-images.githubusercontent.com/88287721/166331983-7ac242f6-74a6-4ab9-9dd9-f15815556512.png)
+![case2](https://user-images.githubusercontent.com/88287721/166331998-381f6e51-a5a0-4ffa-9280-8a3c807517c6.png)
+
+The solution to avoid the inferred latch is to use the <b>default</b> case and to specify the output in that case. The <b>default</b> case will be considered when none of the options match the switching variable. The Verilog code and the schematic of the completed case are shown below:
+
+![case3](https://user-images.githubusercontent.com/88287721/166332495-2644b9b0-db5b-4ed1-bf88-8c5628918efd.png)
+![case4](https://user-images.githubusercontent.com/88287721/166332510-cc702aea-eb09-46d8-885f-98c4c0efe865.png)
+
+It must be noted however that merely by having a <b>default</b> case, the inferred latches may not be avoided. Latches will still be inferred if all the outputs are not specified in all the cases. For example, consider the following situation where the variable <i>x</i> is not defined in the case 2'b01. A latch will be inferred for the output <i>x</i>, as shown by the output of synthesis.
+
+![case5](https://user-images.githubusercontent.com/88287721/166332976-19aebda1-bf45-43d6-b50f-85c2a86d4e64.png)
+![case6](https://user-images.githubusercontent.com/88287721/166332986-03a6756a-8df8-4b64-9618-97e1d187f0b3.png)
+
 ### for loop
+The <b>for</b> loop is used inside <b>always</b> for evaluation of expressions. The for loop comes in very handy when implementing very large multiplexers, de-multiplexers and decoders. The following RTL code implements an 4:1 multiplexer and can easily be modified to realize an 1024:1 multiplexer.
+
+![for1](https://user-images.githubusercontent.com/88287721/166333587-38e66877-d2e0-4676-819e-df0f53ba226b.png)
+
 ### generate for loop
+The <b>generate for</b> construct is used outside of <b>always</b> to instantiate hardware (typically multiple times). For example, a full-adder module may be instantiated multiple times to realize a ripple carry adder using the <b>generate for</b> construct as shown below.
 
+![gen1](https://user-images.githubusercontent.com/88287721/166333975-a51a4e86-51fa-41f9-a8ed-ab41e47cda79.png)
 
-
-
-
-
-
+### Acknowledgements and Gratitude
+1. Kunal P Ghosh for organizing this workshop
+2. Team Chipspirit
+3. Shon Taware for support throughout the workshop
