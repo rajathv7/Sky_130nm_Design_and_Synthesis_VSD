@@ -147,14 +147,59 @@ The output of synthesis after running the command <i>opt_clean -purge</i> is as 
 
 ### Sequential Optimization
 #### Sequential Constant Propagation
+Consider a DFF with asynchronous reset and D input tied to VDD as shown below:
+
+![sopt1](https://user-images.githubusercontent.com/88287721/166323083-cfe709c9-d0a9-4267-a001-dc3c8c665254.png)
+
+Can the flop be replaced simply with an inverter with input as reset? The answer is <b>no</b> since the output goes high only on the rising edge of the clock and not on the falling edge of asynchronous reset. The proof of this analysis is shown in simulation and the output of synthesis in the figures below:
+
+![sopt2](https://user-images.githubusercontent.com/88287721/166323716-eebc69bb-f9ae-4736-88ec-446414e1eff9.png)
+![sopt3](https://user-images.githubusercontent.com/88287721/166323738-b405da76-80f0-48b8-9e70-9d9ff04f0c14.png)
+
+However, instead of asynchronous reset; if the pin were asynchronous set, then the DFF can be replaced with a constant of 1 since there is no way the output of the DFF can become 0. The RTL code for this case and the synthesized output are shown below:
+
+![sopt4](https://user-images.githubusercontent.com/88287721/166324220-68545afb-759f-49b5-9d8f-501f9a9fdc7b.png)
+![sopt5](https://user-images.githubusercontent.com/88287721/166324235-4693209b-e0c8-4ba8-bbbf-b9d41675394a.png)
 
 #### State optimization
 #### Retiming
-#### Sequential Logic Cloning
+In this technique, the combinational logic between every pair of flops is made nearly equal so that the slack is more or less equally distributed between every pair of flops. It consists of moving the combinational around without affecting the overall functionality.
 
-## Day 4: Gate Level Simulation (GLS) and Simulation-Synthesis Mismatch
-### Gate Level Simulation
-### Blocking and Non-blocking Statements
+#### Sequential Logic Cloning
+#### Sequential Optimization for Unused Outputs
+Consider the following example of a 3-bit counter where only the LSB of the counter is given as output of the module, as shown below:
+
+![oopt1](https://user-images.githubusercontent.com/88287721/166325332-4d9e993f-aec6-44ec-be46-ebd38c6256d9.png)
+
+Since the higher two bits are unused, there will be removed in the optimization process. Since the LSB toggles on every clock cycle, the synthesized will have an inverter and only one DFF as shown below:
+
+![oopt2](https://user-images.githubusercontent.com/88287721/166325567-c26c7197-47ee-42b2-93bf-25aa3d9460fc.png)
+
+Notice that a second inverter is present just to invert the reset signal since the DFF of the library file has an active low reset, while we have coded an active high reset.
+
+## Day 4: Gate Level Simulation (GLS) and Synthesis-Simulation Mismatch
+### Gate Level Simulation (GLS)
+GLS involves simulation of the netlist obtained after synthesis. Since the primary inputs and primary outputs of the netlist are same as that of the RTL, the same testbench used to test the RTL can be used to test the netlist as well. GLS is needed to verify the logical correctness of the design after synthesis and also for ensuring that the timing constraints of the design are met. 
+
+GLS can be performed using iverilog like before, as shown below:
+
+![gls1](https://user-images.githubusercontent.com/88287721/166326269-2205f3ea-29b8-481c-85fe-fb799581d93c.png)
+
+But the Gate level verilog models need to be supplied to iverilog in addition to the netlist and testbench. 
+
+### Synthesis-Simulation Mismatch
+Synthesis-Simulation mismatch can occur due to <b>missing sensitivity list</b>, <b>blocking v/s non-blocking statements</b> and <b>non-standard Verilog coding</b>.
+
+#### Missing Sensitivity List
+Consider the following RTL of a 2:1 multiplexer:
+
+![mis1](https://user-images.githubusercontent.com/88287721/166327468-544aaedf-38f8-4ea9-ae48-65ceda4c6ec0.png)
+
+Notice that only <i>sel</i> is present in the sensitivity list. Therefore, the <i>always</i> block will not be executed if there is any change in <i>i0</i> or <i>i1</i>, thereby this exhibits a flop-like behaviour. But the synthesis step yields a 2:1 multiplexer since synthesis tools ignores the sensitivity list, as shown below:
+
+![mis2](https://user-images.githubusercontent.com/88287721/166328123-5b05aebf-e1dc-40a4-867a-8e082cb4e831.png)
+
+#### Blocking v/s Non-blocking Statements
 
 ## Day 5: Optimization in Synthesis
 ### If construct
